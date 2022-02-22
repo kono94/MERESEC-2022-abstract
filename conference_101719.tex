@@ -56,12 +56,8 @@ Behaviour Cloning\cite{alvinn} reduces the task of imitating the behaviour of an
 \argmin_\theta E_{(s,a^*) \sim P*} L(a^*, \pi_\theta(s))
 \end{equation}
 
-
-
-
 \subsection{Other Methods}
 In the first iteration of this work, we focus on the utilization of Behaviour Cloning as primary method. Though it is planned to also apply more advanced and recent algorithms. Those potentially include the improved version of Behaviour Cloning known as \textit{DAgger}\cite{ross2011reduction}, Inverse Reinforcement Learning methods or algorithms from the uprising trend of Adversarial Imitation Learning.
-
 
 \section{Experimental Setup}
 \subsection{Extracting Trajectories from AIS Data}
@@ -78,7 +74,7 @@ For our initial approach, we take historical AIS data from the coast of Bremerha
 
 \begin{figure}[t]
 \centerline{\includegraphics[width=250pt]{images/tracks.PNG}}
-\caption{Example of a figure caption.}
+\caption{Example of 200 extracted trajectories. Region of interest is within the bounds of longitude from 8°372'N to 8°588'N and latitude from 53°457'W to 53°72'W.}
 \label{fig:tracks}
 \end{figure}
 The resulting dataset consists of 28,000 trajectories with a subset being shown in figure \ref{fig:tracks}. In order for the system to incorporate time, the AIS records are resampled and linear interpolated to have a fixed time interval of five seconds. Without explicitly knowing, the agent will always take actions that lead to the next state five seconds into the future.
@@ -99,7 +95,7 @@ To evaluate the performance of our trained policy, we use the Euclidian Distance
 \begin{figure}[t]
 \centering
 \includesvg[width=250pt]{images/performance.svg}
-\caption{Example of a figure caption.}
+\caption{Results sampled over five experiment runs with different seeds and approximately 8300 test trajectories. Trained for two epochs with a network architecture of two fully connected hidden layers that both consist of 32 neurons.}
 \label{fig:result}
 \end{figure}
 \section{Conclusion}
