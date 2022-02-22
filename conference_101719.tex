@@ -7,6 +7,7 @@
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
+\usepackage{svg}
 \DeclareMathOperator*{\argmin}{\arg\!\min}
 
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
@@ -25,7 +26,7 @@ anon.email@domain.com}
 \maketitle
 
 \begin{abstract}
-We suggest an exotic way of approaching the task of predicting vessel trajectories by trying to mimic the underlying behaviour policy of human captains. Decisions made by those experts are recorded by the AIS signals and can be fused with additional non-kinematic factors like weather conditions or surrounding ships to get a more accurate snapshot of the situation that led to chosen maneuvers. In this first draft we utilize Behaviour Cloning on a provisionally low-dimensional observation space to generate end-to-end vessel paths while incorporating time. The results are promising in terms of accuracy, learning efficiency and computational cost.
+We suggest an exotic way of approaching the task of predicting vessel trajectories by trying to mimic the underlying behaviour policy of human captains. Decisions made by those experts are recorded by the AIS signals and can be fused with additional non-kinematic factors like weather conditions or surrounding ships to get a more accurate snapshot of the situation that led to chosen maneuvers. In this first draft we utilize Behaviour Cloning on a provisionally low-dimensional observation space to generate end-to-end vessel paths while incorporating time. The results are promising in terms of accuracy and learning efficiency.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -44,22 +45,22 @@ We approach this task from the perspective of imitation learning where an agent 
 \subsection{Relationship with Reinforcement Learning}
 Imitation Learning is the general approach of extracting the underlying policy given a fixed dataset of expert trajectories. Those trajectories are sampled from an environment which can be  formalized as Markov Decision Process (MDP). This framework consists of an agent which observes the current state of the environment $s_t \in \mathcal{S}$ and interacts with it in discrete timesteps by choosing an appropriate action $a_t \in \mathcal{A}$ based on a policy $\pi: S \rightarrow A$. The environment then calculates the next state $s_{t+1}$ given the internal transition dynamics $p(s_{t+1} \mid s_t, a_t)$  and a scalar reward derived from a hand-crafted reward function $r(s_t, a_t)$ that indicates whether the proposed action was "good" or "bad".
 \par
-Solving such a sequential decision problem is typically achieved by applying Reinforcement Learning which uses the feedback of the environment (the reward signal) to improve the policy with an effort to maximize the discounted sum of future rewards. In fact, there are works in the literature that utilize Reinforcement Learning to the path following problem or predicting vessel trajectories. However those approaches either do not incorporate time or take place in the very distinct field of autonomous control. 
+Solving such a sequential decision problem is typically achieved by applying Reinforcement Learning which uses the feedback of the environment (the reward signal) to improve the policy with an effort to maximize the discounted sum of future rewards. In fact, there are works in the literature that utilize Reinforcement Learning to the path following problem \cite{martinsen2018curved} or predicting vessel trajectories \cite{etemad2020using, zare2021continuous, s20020426, westerlund2021learning}. However those approaches either do not incorporate time or take place in the very distinct field of autonomous control. 
 \par
 Reinforcement Learning and Imitation Learning operate within the same mathematical framework of MDPs with the exception that in the case of Imitation Learning the reward function does not have to be provided or stays unknown. A crucial different as designing a suitable reward function by hand that implicitly defines the desired goal can be a tedious task, especially if the reward function is non-sparse and the researcher tries to "guide" the agent.
 
 \subsection{Behaviour Cloning}
-Behaviour Cloning reduces the task of imitating the behaviour of an expert to a supervised learning problem where a deep neuronal network learns to map states to actions as closely as possible to the expert policy $\pi^*$. That is to minimise the loss between actions suggested by the trained policy and the expert actions for all states encountered in the train set $(s, a^*) \sim P^*$, where $P^*(s|\pi^*)$ is the state distribution of the expert policy \cite{le2022survey}.
+Behaviour Cloning\cite{alvinn} reduces the task of imitating the behaviour of an expert to a supervised learning problem where a deep neuronal network learns to map states to actions as closely as possible to the expert policy $\pi^*$. That is to minimize the loss between actions suggested by the trained policy and the expert actions for all states encountered in the train set $(s, a^*) \sim P^*$, where $P^*(s|\pi^*)$ is the state distribution of the expert policy \cite{le2022survey}.
 
 \begin{equation}
 \argmin_\theta E_{(s,a^*) \sim P*} L(a^*, \pi_\theta(s))
 \end{equation}
 
 
-\cite{alvinn}
+
 
 \subsection{Other Methods}
-In the first iteration of this work, we focus on the utilization of Behaviour Cloning as primary method. Though it is planned to also apply more advanced and recent algorithms. Those potentially include the improved version of Behaviour Cloning known as \textit{DAgger}, Inverse Reinforcement Learning methods or algorithms from the uprising trend of Adversarial Imitation Learning.
+In the first iteration of this work, we focus on the utilization of Behaviour Cloning as primary method. Though it is planned to also apply more advanced and recent algorithms. Those potentially include the improved version of Behaviour Cloning known as \textit{DAgger}\cite{ross2011reduction}, Inverse Reinforcement Learning methods or algorithms from the uprising trend of Adversarial Imitation Learning.
 
 
 \section{Experimental Setup}
@@ -71,7 +72,7 @@ For our initial approach, we take historical AIS data from the coast of Bremerha
     \item Extract provisionally trajectories
     \item Remove outliers based on Interquartile Range
     \item Split trajectories that have time gaps of more than 5 minutes in consecutive AIS signals
-    \item Split trajectories by potential stops or anchoring (ships that stay within the same area of 15 diameters for at least 3 minutes).
+    \item Split trajectories by potential stops, anchoring or waiting in floodgates (ships that stay within the same area of 15 diameters for at least 3 minutes).
     \item Remove all trajectories with a length of less than 300 meters
 \end{itemize}
 
@@ -80,33 +81,31 @@ For our initial approach, we take historical AIS data from the coast of Bremerha
 \caption{Example of a figure caption.}
 \label{fig:tracks}
 \end{figure}
-The resulting dataset consists of 28,000 trajectories with a subset being shown in figure \ref{fig:tracks}. In order for the system to incorporate time, the AIS records are resampled and linear interpolated to have a fixed time interval of 5 seconds. Without explicitly knowing, the agent will always take actions that lead to the next state 5 seconds into the future.
+The resulting dataset consists of 28,000 trajectories with a subset being shown in figure \ref{fig:tracks}. In order for the system to incorporate time, the AIS records are resampled and linear interpolated to have a fixed time interval of five seconds. Without explicitly knowing, the agent will always take actions that lead to the next state five seconds into the future.
 
 \subsection{State Representation and Action Space}
-The current draft only includes classic movement features such as position, speed and heading. Additionally, the time component is given by the fact that consecutive states are always 5 seconds apart from each other. The state- and action space can thus be defined as:
+The current draft only includes classic movement features such as position, speed and heading. Additionally, the time component is given by the fact that consecutive states are always five seconds apart from each other. The state representation and continuous action space can thus be defined as:
 \begin{equation}
     \begin{aligned}
-        \mathcal{S} &= \{lon, lat, CoG, SoG\} \\
-        \mathcal{A} &= \{CoG, SoG\}
+        S &= \{lon, lat, CoG, SoG\} \\
+        A &= \{CoG, SoG\}
     \end{aligned}
 \end{equation}
 
-//TODO why abstract layer
-
 \section{Results}
+To evaluate the performance of our trained policy, we use the Euclidian Distances in meters between the predicted trajectories and the true trajectories present in the test set. The results displayed in fig. \ref{fig:result} indicate that the accuracy of the prediction heavily depends on the given true trajectory ($\mu=178$, $\sigma=147.96$). In more than 3000 cases, the agent follows the given trajectory exceptionally well. At the same time, in certain scenarios the agent's prediction increasingly drifts apart from the real path resulting in a very bad performance score.
 
-The close relationship between Reinforcement- and Imitation Learning also arises from the combination of those two methods. Inverse Reinforcement Learning for example first reconstructs an artificial reward function purely from the expert transition tuples $\{s_t, a_t, s_{t+1}, terminal\}$, to then apply classic interactive Reinforcement Learning. Methods like DAgger use an iterative approach of interacting with the environment while having access to the expert policy as backup.
-\par
-
-Inverse Reinforcement Learning methods like AIRL for example first reconstructs an artificial reward function purely from the expert transition tuples, to then apply classic interactive Reinforcement Learning. Furthermore improved versions of Behaviour Cloning like DAgger can be tested.
 
 \begin{figure}[t]
-\centerline{\includegraphics{fig1.png}}
+\centering
+\includesvg[width=250pt]{images/performance.svg}
 \caption{Example of a figure caption.}
-\label{fig}
+\label{fig:result}
 \end{figure}
 \section{Conclusion}
-
+Although the results and their respective measurements to the agent's performance shown in the preceding section are fluctuating immensely, they still prove that Imitation Learning is indeed a feasible approach to the vessel prediction task. Further investigation has to be done in order to discover what kind of trajectories or vessel types are causing bad performances. Moreover, tweaking the hyperparameters and network architecture should substantially increase the prediction accuracy.
+\par
+Finally non-kinematic features have to be included into the state representation in upcoming experiments.
 
 \bibliographystyle{IEEEtran}
 \bibliography{sources}
